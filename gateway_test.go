@@ -3,26 +3,51 @@ package cqrs
 import (
 	"testing"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 )
 
+const (
+	fooId = "a_foo_id"
+	barId = "a_bar_id"
+)
 var (
-	createFoo   = CreateFooCommand{"an id"}
-	nameFoo     = NameFooCommand{"a name"}
-	genericSome = NotConfiguredCommand{}
+	createFoo      = CreateFooCommand{fooId}
+	nameFoo        = NameFooCommand{fooId, "a name"}
+	genericCommand = NotConfiguredCommand{}
+	createBar      = CreateBarCommand{barId}
+	configureBar   = ConfigureBarCommand{barId, "a configuration"}
 )
 
-func TestCommandGateway(t *testing.T) {
+func TestCommandGateway_foo(t *testing.T) {
 	fooAggregate := &FooAggregate{}
-	commandGateway := NewCommandGateway(fooAggregate)
+	commandGateway := NewCommandGateway(NewMemEventStore())
 	commandGateway.Register(fooAggregate)
 
-	dispatch(commandGateway, createFoo)
-	//dispatch(commandGateway, nameFoo)
+	assert.Equal(t, 2, len(commandGateway.commandHandlers))
+	assert.Equal(t, 2, len(commandGateway.eventListeners))
+
+	dispatchCleanly(commandGateway, createFoo)
+	err := commandGateway.Dispatch(nameFoo)
+	assert.NotNil(t, err)
 
 	fmt.Printf("Final aggregate state: %+v\n", *fooAggregate)
 }
 
-func dispatch(commandGateway *CommandGateway, c interface{}) error {
+func TestCommandGateway_bar(t *testing.T) {
+	barAggregate := &BarAggregate{}
+	commandGateway := NewCommandGateway(NewMemEventStore())
+	commandGateway.Register(barAggregate)
+
+	assert.Equal(t, 2, len(commandGateway.commandHandlers))
+	assert.Equal(t, 2, len(commandGateway.eventListeners))
+
+	dispatchCleanly(commandGateway, createBar)
+	dispatchCleanly(commandGateway, configureBar)
+
+	fmt.Printf("Final aggregate state: %+v\n", *barAggregate)
+}
+
+func dispatchCleanly(commandGateway *CommandGateway, c DomainObject) error {
 	err := commandGateway.Dispatch(c)
 	if err != nil {
 		panic(err)

@@ -13,9 +13,9 @@ func (s *MemEventStore) Persist(aggregateId string, newEvents []EventWrapper) {
 	events := s.eventMap[aggregateId]
 	if events == nil{
 		events = make([]EventWrapper,0)
-		s.eventMap[aggregateId] = events
 	}
 	events = append(events, newEvents...)
+	s.eventMap[aggregateId] = events
 }
 func (s *MemEventStore) Load(aggregateId string) []EventWrapper {
 	return s.eventMap[aggregateId]
