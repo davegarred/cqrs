@@ -1,34 +1,34 @@
 package cqrs
 
 import (
-	"reflect"
 	"fmt"
+	"reflect"
+	"errors"
 )
 
 var (
-	domainObjectInterface = reflect.TypeOf((*DomainObject)(nil)).Elem()
-	errorInterface  = reflect.TypeOf((*error)(nil)).Elem()
+	commandInterface    = reflect.TypeOf((*Command)(nil)).Elem()
+	eventInterface      = reflect.TypeOf((*Event)(nil)).Elem()
+	eventSliceInterface = reflect.TypeOf([]Event{})
+	errorInterface      = reflect.TypeOf((*error)(nil)).Elem()
 )
 
-type EventWrapper struct {
-	AggregateId   string
-	AggregateType reflect.Type
-	Payload       interface{}
+type Command interface {
+	TargetAggregateId() string
 }
 
-type DomainObject interface {
+type Event interface {
 	AggregateId() string
 }
 
 type CommandGateway struct {
-	eventStore EventStore
-	//aggregateType   reflect.Type
-	commandHandlers map[reflect.Type]*CommandHandler
-	eventListeners  map[reflect.Type]*CommandHandler
+	eventStore      EventStore
+	commandHandlers map[reflect.Type]*MessageHandler
+	eventListeners  map[reflect.Type]*MessageHandler
 }
 
 func NewCommandGateway(eventStore EventStore) *CommandGateway {
-	return &CommandGateway{eventStore, make(map[reflect.Type]*CommandHandler), make(map[reflect.Type]*CommandHandler)}
+	return &CommandGateway{eventStore, make(map[reflect.Type]*MessageHandler), make(map[reflect.Type]*MessageHandler)}
 }
 
 func (gateway *CommandGateway) Register(aggregate interface{}) {
@@ -38,95 +38,54 @@ func (gateway *CommandGateway) Register(aggregate interface{}) {
 		f := aggregateType.Method(i)
 
 		if hasCommandHandlerSignature(f) {
-			in := f.Type.In(1)
-
-				gateway.commandHandlers[in] = &CommandHandler{
-					aggregateType: aggregateType,
-					aggregate:     reflect.ValueOf(aggregate),
-					funcName:      f.Name,
-					f:             f.Func,
-				}
+			gateway.commandHandlers[f.Type.In(1)]  = NewMessageHandler(aggregateType, f)
 		} else if hasEventListenerSignature(f) {
-			in := f.Type.In(1)
-			gateway.eventListeners[in] = &CommandHandler{
-				aggregateType: aggregateType,
-				aggregate:     reflect.ValueOf(aggregate),
-				funcName:      f.Name,
-				f:             f.Func,
-			}
+			gateway.eventListeners[f.Type.In(1)] = NewMessageHandler(aggregateType, f)
 		}
 	}
-	fmt.Printf("Aggregate %v registered\n", aggregateType)
+}
+
+func (gateway *CommandGateway) logAggregateRegistrationDetails() {
 	fmt.Println("Configured command handlers:")
 	for k, v := range gateway.commandHandlers {
-		fmt.Printf("\t%v - %s\n", k, v.funcName)
+		fmt.Printf("\t%v - %s (%v)\n", k, v.funcName, v.aggregateType)
 	}
 	fmt.Println("Configured event listeners:")
 	for k, v := range gateway.eventListeners {
-		fmt.Printf("\t%v - %s\n", k, v.funcName)
+		fmt.Printf("\t%v - %s (%v)\n", k, v.funcName, v.aggregateType)
 	}
 }
-func hasCommandHandlerSignature(f reflect.Method) bool {
-	if f.Type.NumIn() != 2 || f.Type.NumOut() != 2 {
-		return false
-	}
 
-	if !f.Type.In(1).Implements(domainObjectInterface) {
-		return false
-	}
-
-	var wrap []EventWrapper
-
-	return f.Type.Out(0) == reflect.TypeOf(wrap) && f.Type.Out(1).Implements(errorInterface)
-}
-func hasEventListenerSignature(f reflect.Method) bool {
-	if f.Type.NumIn() != 2 || f.Type.NumOut() > 0 {
-		return false
-	}
-	return f.Type.In(1).Implements(domainObjectInterface)
-}
-
-func (gateway *CommandGateway) Dispatch(command DomainObject) error {
+func (gateway *CommandGateway) Dispatch(command Command) error {
 	commandType := reflect.TypeOf(command)
 	commandHandler := gateway.commandHandlers[commandType]
 	if commandHandler == nil {
-		s := fmt.Sprintf("DomainObject handler for %v not configured", commandType)
-		panic(s)
+		s := fmt.Sprintf("Command handler for %v not configured", commandType)
+		return errors.New(s)
 	}
 
-	aggregateId := command.AggregateId()
+	aggregateId := command.TargetAggregateId()
 	aggregate := gateway.loadAggregate(commandHandler.aggregateType, aggregateId)
-	in := []reflect.Value{aggregate, reflect.ValueOf(command)}
 
-	response := commandHandler.f.Call(in)
-	err := response[1].Interface()
+	events, err := commandHandler.Call(aggregate, command)
 	if err != nil {
-		return err.(error)
+		return err
 	}
-	eventWrappers := response[0].Interface().([]EventWrapper)
-	gateway.eventStore.Persist(aggregateId, eventWrappers)
+	gateway.eventStore.Persist(aggregateId, events)
 	return nil
 }
 func (gateway *CommandGateway) loadAggregate(aggregateType reflect.Type, aggregateId string) reflect.Value {
 	events := gateway.eventStore.Load(aggregateId)
 	aggregate := reflect.New(aggregateType.Elem())
-	for _,event := range events {
-		fmt.Println("applying event: ", event)
+	for _, event := range events {
+		listener := gateway.eventListeners[reflect.TypeOf(event)]
+		if listener != nil {
+			if listener.aggregateType != aggregateType {
+				error := fmt.Sprintf("Incorrectly configured event listener, event type %T was produced via %v but has an event listener attached to %v\n", event, aggregateType, listener.aggregateType)
+				panic(error)
+			}
+			listener.ApplyEvent(aggregate, event)
+		}
 	}
 	return aggregate
-}
-
-func WrapEvent(aggregateId string, aggregate interface{}, event interface{}) EventWrapper {
-	return EventWrapper{
-		AggregateId:   aggregateId,
-		AggregateType: reflect.TypeOf(aggregate),
-		Payload:       event,
-	}
-}
-
-type CommandHandler struct {
-	aggregateType reflect.Type
-	aggregate     reflect.Value
-	funcName      string
-	f             reflect.Value
 }

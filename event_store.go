@@ -1,26 +1,26 @@
 package cqrs
 
 type EventStore interface {
-	Persist(string,[]EventWrapper)
-	Load(string) []EventWrapper
+	Persist(string,[]Event)
+	Load(string) []Event
 }
 
 type MemEventStore struct {
-	eventMap map[string][]EventWrapper
+	eventMap map[string][]Event
 }
 
-func (s *MemEventStore) Persist(aggregateId string, newEvents []EventWrapper) {
+func (s *MemEventStore) Persist(aggregateId string, newEvents []Event) {
 	events := s.eventMap[aggregateId]
 	if events == nil{
-		events = make([]EventWrapper,0)
+		events = make([]Event,0)
 	}
 	events = append(events, newEvents...)
 	s.eventMap[aggregateId] = events
 }
-func (s *MemEventStore) Load(aggregateId string) []EventWrapper {
+func (s *MemEventStore) Load(aggregateId string) []Event {
 	return s.eventMap[aggregateId]
 }
 
 func NewMemEventStore() EventStore {
-	return &MemEventStore{make(map[string][]EventWrapper)}
+	return &MemEventStore{make(map[string][]Event)}
 }

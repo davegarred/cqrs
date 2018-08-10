@@ -2,7 +2,6 @@ package cqrs
 
 import (
 	"errors"
-	"reflect"
 )
 
 type FooAggregate struct {
@@ -24,38 +23,36 @@ func (a *FooAggregate) NonCQRSFunction_oneParam_similarSig(_ string) ([]string,e
 	panic("This should never be called")
 	return nil, nil
 }
-func (a *FooAggregate) HandleCreateFoo(e CreateFooCommand) ([]EventWrapper, error) {
-	eventWrapper := WrapEvent(e.Id, a, FooCreatedEvent{e.Id})
-	return []EventWrapper{eventWrapper}, nil
+func (a *FooAggregate) HandleCreateFoo(e CreateFooCommand) ([]Event, error) {
+	return []Event{FooCreatedEvent{e.Id}}, nil
 }
-func (a *FooAggregate) HandleNameFoo_requireIdSet(e NameFooCommand) ([]EventWrapper, error) {
+func (a *FooAggregate) HandleNameFoo_requireIdSet(e NameFooCommand) ([]Event, error) {
 	if a.fooId == "" {
 		return nil, errors.New("aggregate has not been initialized")
 	}
-	eventWrapper := WrapEvent(a.fooId, a, FooNamedEvent{e.Id, e.Name})
-	return []EventWrapper{eventWrapper}, nil
+	return []Event{FooNamedEvent{e.Id, e.Name}}, nil
 }
 
-func (a *FooAggregate) OnFooCreated(e *FooCreatedEvent) {
+func (a *FooAggregate) OnFooCreated(e FooCreatedEvent) {
 	a.fooId = e.Id
 }
-func (a *FooAggregate) OnFooNamed(e *FooNamedEvent) {
+func (a *FooAggregate) OnFooNamed(e FooNamedEvent) {
 	a.name = e.Name
 }
 
 type CreateFooCommand struct {
 	Id string
 }
-func (e CreateFooCommand) AggregateId() string {return e.Id}
+func (e CreateFooCommand) TargetAggregateId() string {return e.Id}
 type NameFooCommand struct {
 	Id string
 	Name string
 }
-func (e NameFooCommand) AggregateId() string {return e.Id}
+func (e NameFooCommand) TargetAggregateId() string {return e.Id}
 type NotConfiguredCommand struct {
 	Id string
 }
-func (e NotConfiguredCommand) AggregateId() string {return e.Id}
+func (e NotConfiguredCommand) TargetAggregateId() string {return e.Id}
 
 type FooCreatedEvent struct {
 	Id string
@@ -74,14 +71,11 @@ type BarAggregate struct {
 	configuration string
 }
 
-func (a *BarAggregate) HandleCreateBar(e CreateBarCommand) ([]EventWrapper, error) {
-	event := FooCreatedEvent{e.Id}
-	eventWrapper := WrapEvent(e.Id,reflect.TypeOf(a), event)
-	return []EventWrapper{eventWrapper}, nil
+func (a *BarAggregate) HandleCreateBar(e CreateBarCommand) ([]Event, error) {
+	return []Event{BarCreatedEvent{e.Id}}, nil
 }
-func (a *BarAggregate) HandleNameBar(e ConfigureBarCommand) ([]EventWrapper, error) {
-	eventWrapper := WrapEvent(a.barId, a, BarConfiguredEvent{e.Id, e.Configuration})
-	return []EventWrapper{eventWrapper}, nil
+func (a *BarAggregate) HandleNameBar(e ConfigureBarCommand) ([]Event, error) {
+	return []Event{BarConfiguredEvent{e.Id, e.Configuration}}, nil
 }
 
 func (a *BarAggregate) OnBarCreated(e BarCreatedEvent) {
@@ -94,12 +88,12 @@ func (a *BarAggregate) OnBarConfigured(e BarConfiguredEvent) {
 type CreateBarCommand struct {
 	Id string
 }
-func (e CreateBarCommand) AggregateId() string {return e.Id}
+func (e CreateBarCommand) TargetAggregateId() string {return e.Id}
 type ConfigureBarCommand struct {
 	Id string
 	Configuration string
 }
-func (e ConfigureBarCommand) AggregateId() string {return e.Id}
+func (e ConfigureBarCommand) TargetAggregateId() string {return e.Id}
 
 type BarCreatedEvent struct {
 	Id string
