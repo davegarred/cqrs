@@ -9,7 +9,6 @@ type FooAggregate struct {
 	name  string
 }
 
-
 func (a *FooAggregate) NonCQRSFunction_noParams() {
 	panic("This should never be called")
 }
@@ -19,7 +18,7 @@ func (a *FooAggregate) NonCQRSFunction_oneParam(_ string) {
 func (a *FooAggregate) NonCQRSFunction_twoParams(_ string, _ int) {
 	panic("This should never be called")
 }
-func (a *FooAggregate) NonCQRSFunction_oneParam_similarSig(_ string) ([]string,error) {
+func (a *FooAggregate) NonCQRSFunction_oneParam_similarSig(_ string) ([]string, error) {
 	panic("This should never be called")
 	return nil, nil
 }
@@ -43,28 +42,34 @@ func (a *FooAggregate) OnFooNamed(e FooNamedEvent) {
 type CreateFooCommand struct {
 	Id string
 }
-func (e CreateFooCommand) TargetAggregateId() string {return e.Id}
+
+func (e CreateFooCommand) TargetAggregateId() string { return e.Id }
+
 type NameFooCommand struct {
-	Id string
+	Id   string
 	Name string
 }
-func (e NameFooCommand) TargetAggregateId() string {return e.Id}
+
+func (e NameFooCommand) TargetAggregateId() string { return e.Id }
+
 type NotConfiguredCommand struct {
 	Id string
 }
-func (e NotConfiguredCommand) TargetAggregateId() string {return e.Id}
+
+func (e NotConfiguredCommand) TargetAggregateId() string { return e.Id }
 
 type FooCreatedEvent struct {
 	Id string
 }
-func (e FooCreatedEvent) AggregateId() string {return e.Id}
+
+func (e FooCreatedEvent) AggregateId() string { return e.Id }
+
 type FooNamedEvent struct {
-	Id string
+	Id   string
 	Name string
 }
-func (e FooNamedEvent) AggregateId() string {return e.Id}
 
-
+func (e FooNamedEvent) AggregateId() string { return e.Id }
 
 type BarAggregate struct {
 	barId         string
@@ -88,33 +93,40 @@ func (a *BarAggregate) OnBarConfigured(e BarConfiguredEvent) {
 type CreateBarCommand struct {
 	Id string
 }
-func (e CreateBarCommand) TargetAggregateId() string {return e.Id}
+
+func (e CreateBarCommand) TargetAggregateId() string { return e.Id }
+
 type ConfigureBarCommand struct {
-	Id string
+	Id            string
 	Configuration string
 }
-func (e ConfigureBarCommand) TargetAggregateId() string {return e.Id}
+
+func (e ConfigureBarCommand) TargetAggregateId() string { return e.Id }
 
 type BarCreatedEvent struct {
 	Id string
 }
-func (e BarCreatedEvent) AggregateId() string {return e.Id}
+
+func (e BarCreatedEvent) AggregateId() string { return e.Id }
+
 type BarConfiguredEvent struct {
-	Id string
+	Id            string
 	Configuration string
 }
-func (e BarConfiguredEvent) AggregateId() string {return e.Id}
 
+func (e BarConfiguredEvent) AggregateId() string { return e.Id }
 
 var queryMap map[string]FooBarQuery
+
 func init() {
 	queryMap = make(map[string]FooBarQuery)
 }
+
 type FooBarQuery struct {
-	Id string	`json:"id"`
-	Type string	`json:"type"`
-	Name  string	`json:"name"`
-	Configuration string	`json:"configuration"`
+	Id            string `json:"id"`
+	Type          string `json:"type"`
+	Name          string `json:"name"`
+	Configuration string `json:"configuration"`
 }
 
 type FooBarEventListener QueryEventListener

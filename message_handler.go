@@ -4,25 +4,30 @@ import (
 	"reflect"
 )
 
+var (
+	commandInterface    = reflect.TypeOf((*Command)(nil)).Elem()
+	eventInterface      = reflect.TypeOf((*Event)(nil)).Elem()
+	eventSliceInterface = reflect.TypeOf([]Event{})
+	errorInterface      = reflect.TypeOf((*error)(nil)).Elem()
+)
+
 type MessageHandler struct {
-	aggregateType reflect.Type
-	aggregate     reflect.Value
-	funcName      string
-	f             reflect.Value
+	AggregateType reflect.Type
+	FuncName      string
+	F             reflect.Value
 }
 
 func NewMessageHandler(aggregateType reflect.Type, f reflect.Method) *MessageHandler {
 	return &MessageHandler{
-		aggregateType: aggregateType,
-		//aggregate:     aggregateValue,
-		funcName:      f.Name,
-		f:             f.Func,
+		AggregateType: aggregateType,
+		FuncName:      f.Name,
+		F:             f.Func,
 	}
 }
 
 func (handler *MessageHandler) Call(aggregate reflect.Value, command Command) ([]Event, error) {
 	in := []reflect.Value{aggregate, reflect.ValueOf(command)}
-	response := handler.f.Call(in)
+	response := handler.F.Call(in)
 	err := response[1].Interface()
 	if err != nil {
 		return nil, err.(error)
@@ -33,7 +38,7 @@ func (handler *MessageHandler) Call(aggregate reflect.Value, command Command) ([
 
 func (handler *MessageHandler) ApplyEvent(aggregate reflect.Value, event Event) reflect.Value {
 	in := []reflect.Value{aggregate, reflect.ValueOf(event)}
-	handler.f.Call(in)
+	handler.F.Call(in)
 	return aggregate
 }
 

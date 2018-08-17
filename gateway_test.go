@@ -1,15 +1,15 @@
 package cqrs
 
 import (
-	"testing"
-	"fmt"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 const (
 	fooId = "a_foo_id"
 	barId = "a_bar_id"
 )
+
 var (
 	createFoo            = CreateFooCommand{fooId}
 	nameFoo              = NameFooCommand{fooId, "a name"}
@@ -19,25 +19,19 @@ var (
 )
 
 func TestCommandGateway_foo(t *testing.T) {
+	eventBus := NewEventBus()
 	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore)
+	commandGateway := NewCommandGateway(eventStore, eventBus)
 	commandGateway.RegisterAggregate(&FooAggregate{})
-	commandGateway.RegisterQueryEventHandlers(&FooBarEventListener{})
 
 	assert.Equal(t, 2, len(commandGateway.commandHandlers))
-	assert.Equal(t, 2, len(commandGateway.eventListeners))
-	assert.Equal(t, 4, len(commandGateway.queryEventListeners))
-
-	dispatchCleanly(commandGateway, createFoo)
-	err := commandGateway.Dispatch(nameFoo)
-	assert.Nil(t, err)
-
-	assert.Equal(t, 2, len(eventStore.Load(createFoo.Id)))
+	assert.Equal(t, 2, len(commandGateway.aggregateEventListeners))
 }
 
 func TestCommandGateway_errorOnDispatch(t *testing.T) {
+	eventBus := NewEventBus()
 	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore)
+	commandGateway := NewCommandGateway(eventStore, eventBus)
 	commandGateway.RegisterAggregate(&FooAggregate{})
 
 	err := commandGateway.Dispatch(nameFoo)
@@ -47,8 +41,9 @@ func TestCommandGateway_errorOnDispatch(t *testing.T) {
 }
 
 func TestCommandGateway_unconfiguredCommand(t *testing.T) {
+	eventBus := NewEventBus()
 	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore)
+	commandGateway := NewCommandGateway(eventStore, eventBus)
 	commandGateway.RegisterAggregate(&FooAggregate{})
 
 	err := commandGateway.Dispatch(notConfiguredCommand)
@@ -58,53 +53,23 @@ func TestCommandGateway_unconfiguredCommand(t *testing.T) {
 }
 
 func TestCommandGateway_bar(t *testing.T) {
+	eventBus := NewEventBus()
 	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore)
+	commandGateway := NewCommandGateway(eventStore, eventBus)
 	commandGateway.RegisterAggregate(&BarAggregate{})
-	commandGateway.RegisterQueryEventHandlers(&FooBarEventListener{})
 
 	assert.Equal(t, 2, len(commandGateway.commandHandlers))
-	assert.Equal(t, 2, len(commandGateway.eventListeners))
-	assert.Equal(t, 4, len(commandGateway.queryEventListeners))
-
-	dispatchCleanly(commandGateway, createBar)
-	dispatchCleanly(commandGateway, configureBar)
-
-	assert.Equal(t, 2, len(eventStore.Load(createBar.Id)))
+	assert.Equal(t, 2, len(commandGateway.aggregateEventListeners))
 }
-
 
 func TestCombinedCommandGateways(t *testing.T) {
+	eventBus := NewEventBus()
 	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore)
+	commandGateway := NewCommandGateway(eventStore, eventBus)
 	commandGateway.RegisterAggregate(&FooAggregate{})
 	commandGateway.RegisterAggregate(&BarAggregate{})
-	commandGateway.RegisterQueryEventHandlers(&FooBarEventListener{})
 
 	assert.Equal(t, 4, len(commandGateway.commandHandlers))
-	assert.Equal(t, 4, len(commandGateway.eventListeners))
-	assert.Equal(t, 4, len(commandGateway.queryEventListeners))
+	assert.Equal(t, 4, len(commandGateway.aggregateEventListeners))
 
-	dispatchCleanly(commandGateway, createFoo)
-	dispatchCleanly(commandGateway, nameFoo)
-
-	dispatchCleanly(commandGateway, createBar)
-	dispatchCleanly(commandGateway, configureBar)
-
-
-	fmt.Println("Published events:")
-	for _,event := range eventStore.Load(createBar.Id) {
-		fmt.Printf("\t- %+v\n", event)
-	}
-	for _,event := range eventStore.Load(createFoo.Id) {
-		fmt.Printf("\t- %+v\n", event)
-	}
-}
-
-func dispatchCleanly(commandGateway *CommandGateway, c Command) error {
-	err := commandGateway.Dispatch(c)
-	if err != nil {
-		panic(err)
-	}
-	return nil
 }
