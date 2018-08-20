@@ -22,7 +22,7 @@ func TestCommandGateway_foo(t *testing.T) {
 	eventStore := NewMemEventStore()
 	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&FooAggregate{})
-	commandGateway.RegisterQueryEventHandlers()
+	commandGateway.RegisterQueryEventHandlers(&FooBarEventListener{})
 
 	assert.Equal(t, 2, len(commandGateway.commandHandlers))
 	assert.Equal(t, 2, len(commandGateway.eventListeners))
@@ -61,7 +61,7 @@ func TestCommandGateway_bar(t *testing.T) {
 	eventStore := NewMemEventStore()
 	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&BarAggregate{})
-	commandGateway.RegisterQueryEventHandlers()
+	commandGateway.RegisterQueryEventHandlers(&FooBarEventListener{})
 
 	assert.Equal(t, 2, len(commandGateway.commandHandlers))
 	assert.Equal(t, 2, len(commandGateway.eventListeners))
@@ -79,7 +79,7 @@ func TestCombinedCommandGateways(t *testing.T) {
 	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&FooAggregate{})
 	commandGateway.RegisterAggregate(&BarAggregate{})
-	commandGateway.RegisterQueryEventHandlers()
+	commandGateway.RegisterQueryEventHandlers(&FooBarEventListener{})
 
 	assert.Equal(t, 4, len(commandGateway.commandHandlers))
 	assert.Equal(t, 4, len(commandGateway.eventListeners))

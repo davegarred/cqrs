@@ -46,8 +46,8 @@ func (gateway *CommandGateway) RegisterAggregate(aggregate interface{}) {
 	}
 }
 
-func (gateway *CommandGateway) RegisterQueryEventHandlers() {
-	aggregateType := reflect.TypeOf(&QueryEventHandler{})
+func (gateway *CommandGateway) RegisterQueryEventHandlers(listener interface{}) {
+	aggregateType := reflect.TypeOf(listener)
 	for i := 0; i < aggregateType.NumMethod(); i++ {
 		f := aggregateType.Method(i)
 

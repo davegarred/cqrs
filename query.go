@@ -1,5 +1,5 @@
 package cqrs
 
-type QueryEventHandler struct {
+type QueryEventListener struct {
 
 }

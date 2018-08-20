@@ -117,25 +117,26 @@ type FooBarQuery struct {
 	Configuration string	`json:"configuration"`
 }
 
+type FooBarEventListener QueryEventListener
 
-func (_ *QueryEventHandler) OnBarCreated(e BarCreatedEvent) {
+func (*FooBarEventListener) OnBarCreated(e BarCreatedEvent) {
 	q := FooBarQuery{}
 	q.Id = e.Id
 	q.Type = "Bar"
 	queryMap[e.Id] = q
 }
-func (_ *QueryEventHandler) OnBarConfigured(e BarConfiguredEvent) {
+func (*FooBarEventListener) OnBarConfigured(e BarConfiguredEvent) {
 	q := queryMap[e.Id]
 	q.Configuration = e.Configuration
 	queryMap[e.Id] = q
 }
-func (_ *QueryEventHandler) OnFooCreated(e FooCreatedEvent) {
+func (*FooBarEventListener) OnFooCreated(e FooCreatedEvent) {
 	q := queryMap[e.Id]
 	q.Id = e.Id
 	q.Type = "Foo"
 	queryMap[e.Id] = q
 }
-func (_ *QueryEventHandler) OnFooNamed(e FooNamedEvent) {
+func (*FooBarEventListener) OnFooNamed(e FooNamedEvent) {
 	q := queryMap[e.Id]
 	q.Name = e.Name
 	queryMap[e.Id] = q
