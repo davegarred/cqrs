@@ -104,3 +104,39 @@ type BarConfiguredEvent struct {
 	Configuration string
 }
 func (e BarConfiguredEvent) AggregateId() string {return e.Id}
+
+
+var queryMap map[string]FooBarQuery
+func init() {
+	queryMap = make(map[string]FooBarQuery)
+}
+type FooBarQuery struct {
+	Id string	`json:"id"`
+	Type string	`json:"type"`
+	Name  string	`json:"name"`
+	Configuration string	`json:"configuration"`
+}
+
+
+func (_ *QueryEventHandler) OnBarCreated(e BarCreatedEvent) {
+	q := FooBarQuery{}
+	q.Id = e.Id
+	q.Type = "Bar"
+	queryMap[e.Id] = q
+}
+func (_ *QueryEventHandler) OnBarConfigured(e BarConfiguredEvent) {
+	q := queryMap[e.Id]
+	q.Configuration = e.Configuration
+	queryMap[e.Id] = q
+}
+func (_ *QueryEventHandler) OnFooCreated(e FooCreatedEvent) {
+	q := queryMap[e.Id]
+	q.Id = e.Id
+	q.Type = "Foo"
+	queryMap[e.Id] = q
+}
+func (_ *QueryEventHandler) OnFooNamed(e FooNamedEvent) {
+	q := queryMap[e.Id]
+	q.Name = e.Name
+	queryMap[e.Id] = q
+}

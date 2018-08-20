@@ -25,13 +25,14 @@ type CommandGateway struct {
 	eventStore      EventStore
 	commandHandlers map[reflect.Type]*MessageHandler
 	eventListeners  map[reflect.Type]*MessageHandler
+	queryEventListeners  map[reflect.Type][]*MessageHandler
 }
 
 func NewCommandGateway(eventStore EventStore) *CommandGateway {
-	return &CommandGateway{eventStore, make(map[reflect.Type]*MessageHandler), make(map[reflect.Type]*MessageHandler)}
+	return &CommandGateway{eventStore, make(map[reflect.Type]*MessageHandler), make(map[reflect.Type]*MessageHandler), make(map[reflect.Type][]*MessageHandler)}
 }
 
-func (gateway *CommandGateway) Register(aggregate interface{}) {
+func (gateway *CommandGateway) RegisterAggregate(aggregate interface{}) {
 	aggregateType := reflect.TypeOf(aggregate)
 
 	for i := 0; i < aggregateType.NumMethod(); i++ {
@@ -41,6 +42,23 @@ func (gateway *CommandGateway) Register(aggregate interface{}) {
 			gateway.commandHandlers[f.Type.In(1)]  = NewMessageHandler(aggregateType, f)
 		} else if hasEventListenerSignature(f) {
 			gateway.eventListeners[f.Type.In(1)] = NewMessageHandler(aggregateType, f)
+		}
+	}
+}
+
+func (gateway *CommandGateway) RegisterQueryEventHandlers() {
+	aggregateType := reflect.TypeOf(&QueryEventHandler{})
+	for i := 0; i < aggregateType.NumMethod(); i++ {
+		f := aggregateType.Method(i)
+
+		if hasEventListenerSignature(f) {
+			eventType := f.Type.In(1)
+			queryEventListeners := gateway.queryEventListeners[eventType]
+			if queryEventListeners == nil {
+				queryEventListeners = make([]*MessageHandler,0)
+			}
+			queryEventListeners = append(queryEventListeners, NewMessageHandler(aggregateType, f))
+			gateway.queryEventListeners[eventType] = queryEventListeners
 		}
 	}
 }
@@ -72,7 +90,17 @@ func (gateway *CommandGateway) Dispatch(command Command) error {
 		return err
 	}
 	gateway.eventStore.Persist(aggregateId, events)
+	publishEvents(events, gateway)
 	return nil
+}
+
+func publishEvents(events []Event, gateway *CommandGateway) {
+	for _, event := range events {
+		for _,listener := range gateway.queryEventListeners[reflect.TypeOf(event)] {
+			agg := reflect.New(listener.aggregateType).Elem()
+			listener.ApplyEvent(agg, event)
+		}
+	}
 }
 func (gateway *CommandGateway) loadAggregate(aggregateType reflect.Type, aggregateId string) reflect.Value {
 	events := gateway.eventStore.Load(aggregateId)

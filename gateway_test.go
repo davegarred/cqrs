@@ -21,14 +21,15 @@ var (
 func TestCommandGateway_foo(t *testing.T) {
 	eventStore := NewMemEventStore()
 	commandGateway := NewCommandGateway(eventStore)
-	commandGateway.Register(&FooAggregate{})
+	commandGateway.RegisterAggregate(&FooAggregate{})
+	commandGateway.RegisterQueryEventHandlers()
 
 	assert.Equal(t, 2, len(commandGateway.commandHandlers))
 	assert.Equal(t, 2, len(commandGateway.eventListeners))
+	assert.Equal(t, 4, len(commandGateway.queryEventListeners))
 
 	dispatchCleanly(commandGateway, createFoo)
 	err := commandGateway.Dispatch(nameFoo)
-	//assert.NotNil(t, err)
 	assert.Nil(t, err)
 
 	assert.Equal(t, 2, len(eventStore.Load(createFoo.Id)))
@@ -37,7 +38,7 @@ func TestCommandGateway_foo(t *testing.T) {
 func TestCommandGateway_errorOnDispatch(t *testing.T) {
 	eventStore := NewMemEventStore()
 	commandGateway := NewCommandGateway(eventStore)
-	commandGateway.Register(&FooAggregate{})
+	commandGateway.RegisterAggregate(&FooAggregate{})
 
 	err := commandGateway.Dispatch(nameFoo)
 	assert.NotNil(t, err)
@@ -48,7 +49,7 @@ func TestCommandGateway_errorOnDispatch(t *testing.T) {
 func TestCommandGateway_unconfiguredCommand(t *testing.T) {
 	eventStore := NewMemEventStore()
 	commandGateway := NewCommandGateway(eventStore)
-	commandGateway.Register(&FooAggregate{})
+	commandGateway.RegisterAggregate(&FooAggregate{})
 
 	err := commandGateway.Dispatch(notConfiguredCommand)
 	assert.NotNil(t, err)
@@ -59,10 +60,12 @@ func TestCommandGateway_unconfiguredCommand(t *testing.T) {
 func TestCommandGateway_bar(t *testing.T) {
 	eventStore := NewMemEventStore()
 	commandGateway := NewCommandGateway(eventStore)
-	commandGateway.Register(&BarAggregate{})
+	commandGateway.RegisterAggregate(&BarAggregate{})
+	commandGateway.RegisterQueryEventHandlers()
 
 	assert.Equal(t, 2, len(commandGateway.commandHandlers))
 	assert.Equal(t, 2, len(commandGateway.eventListeners))
+	assert.Equal(t, 4, len(commandGateway.queryEventListeners))
 
 	dispatchCleanly(commandGateway, createBar)
 	dispatchCleanly(commandGateway, configureBar)
@@ -74,12 +77,13 @@ func TestCommandGateway_bar(t *testing.T) {
 func TestCombinedCommandGateways(t *testing.T) {
 	eventStore := NewMemEventStore()
 	commandGateway := NewCommandGateway(eventStore)
-	commandGateway.Register(&FooAggregate{})
-	commandGateway.Register(&BarAggregate{})
+	commandGateway.RegisterAggregate(&FooAggregate{})
+	commandGateway.RegisterAggregate(&BarAggregate{})
+	commandGateway.RegisterQueryEventHandlers()
 
 	assert.Equal(t, 4, len(commandGateway.commandHandlers))
 	assert.Equal(t, 4, len(commandGateway.eventListeners))
-	//commandGateway.logAggregateRegistrationDetails()
+	assert.Equal(t, 4, len(commandGateway.queryEventListeners))
 
 	dispatchCleanly(commandGateway, createFoo)
 	dispatchCleanly(commandGateway, nameFoo)
