@@ -22,8 +22,8 @@ var (
 
 func TestCommandGateway_foo(t *testing.T) {
 	eventBus := cqrs.NewEventBus()
-	eventStore := cqrs.NewMemEventStore()
-	commandGateway := cqrs.NewCommandGateway(eventStore, eventBus)
+	eventStore := cqrs.NewMemEventStore(eventBus)
+	commandGateway := cqrs.NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&cqrs.FooAggregate{})
 	eventBus.RegisterQueryEventHandlers(&cqrs.FooBarEventListener{})
 
@@ -36,8 +36,8 @@ func TestCommandGateway_foo(t *testing.T) {
 
 func TestCommandGateway_bar(t *testing.T) {
 	eventBus := cqrs.NewEventBus()
-	eventStore := cqrs.NewMemEventStore()
-	commandGateway := cqrs.NewCommandGateway(eventStore, eventBus)
+	eventStore := cqrs.NewMemEventStore(eventBus)
+	commandGateway := cqrs.NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&cqrs.BarAggregate{})
 	eventBus.RegisterQueryEventHandlers(&cqrs.FooBarEventListener{})
 
@@ -49,8 +49,8 @@ func TestCommandGateway_bar(t *testing.T) {
 
 func TestCombinedCommandGateways(t *testing.T) {
 	eventBus := cqrs.NewEventBus()
-	eventStore := cqrs.NewMemEventStore()
-	commandGateway := cqrs.NewCommandGateway(eventStore, eventBus)
+	eventStore := cqrs.NewMemEventStore(eventBus)
+	commandGateway := cqrs.NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&cqrs.FooAggregate{})
 	commandGateway.RegisterAggregate(&cqrs.BarAggregate{})
 	eventBus.RegisterQueryEventHandlers(&cqrs.FooBarEventListener{})

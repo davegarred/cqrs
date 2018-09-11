@@ -20,8 +20,8 @@ var (
 
 func TestCommandGateway_foo(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore, eventBus)
+	eventStore := NewMemEventStore(eventBus)
+	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&FooAggregate{})
 
 	assert.Equal(t, 2, len(commandGateway.commandHandlers))
@@ -30,8 +30,8 @@ func TestCommandGateway_foo(t *testing.T) {
 
 func TestCommandGateway_errorOnDispatch(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore, eventBus)
+	eventStore := NewMemEventStore(eventBus)
+	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&FooAggregate{})
 
 	err := commandGateway.Dispatch(nameFoo)
@@ -42,8 +42,8 @@ func TestCommandGateway_errorOnDispatch(t *testing.T) {
 
 func TestCommandGateway_unconfiguredCommand(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore, eventBus)
+	eventStore := NewMemEventStore(eventBus)
+	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&FooAggregate{})
 
 	err := commandGateway.Dispatch(notConfiguredCommand)
@@ -54,8 +54,8 @@ func TestCommandGateway_unconfiguredCommand(t *testing.T) {
 
 func TestCommandGateway_bar(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore, eventBus)
+	eventStore := NewMemEventStore(eventBus)
+	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&BarAggregate{})
 
 	assert.Equal(t, 2, len(commandGateway.commandHandlers))
@@ -64,8 +64,8 @@ func TestCommandGateway_bar(t *testing.T) {
 
 func TestCombinedCommandGateways(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore()
-	commandGateway := NewCommandGateway(eventStore, eventBus)
+	eventStore := NewMemEventStore(eventBus)
+	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&FooAggregate{})
 	commandGateway.RegisterAggregate(&BarAggregate{})
 

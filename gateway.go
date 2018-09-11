@@ -8,13 +8,12 @@ import (
 
 type CommandGateway struct {
 	eventStore              EventStore
-	eventBus                *EventBus
-	commandHandlers         map[reflect.Type]*MessageHandler
-	aggregateEventListeners map[reflect.Type]*MessageHandler
+	commandHandlers         map[reflect.Type]*aggregateMessageHandler
+	aggregateEventListeners map[reflect.Type]*aggregateMessageHandler
 }
 
-func NewCommandGateway(eventStore EventStore, eventBus *EventBus) *CommandGateway {
-	return &CommandGateway{eventStore, eventBus, make(map[reflect.Type]*MessageHandler), make(map[reflect.Type]*MessageHandler)}
+func NewCommandGateway(eventStore EventStore) *CommandGateway {
+	return &CommandGateway{eventStore, make(map[reflect.Type]*aggregateMessageHandler), make(map[reflect.Type]*aggregateMessageHandler)}
 }
 
 func (gateway *CommandGateway) RegisterAggregate(aggregate interface{}) {
@@ -42,12 +41,11 @@ func (gateway *CommandGateway) Dispatch(command Command) error {
 	aggregateId := command.TargetAggregateId()
 	aggregate := gateway.loadAggregate(commandHandler.AggregateType, aggregateId)
 
-	events, err := commandHandler.Call(aggregate, command)
+	events, err := commandHandler.applyCommand(aggregate, command)
 	if err != nil {
 		return err
 	}
 	gateway.eventStore.Persist(aggregateId, events)
-	gateway.eventBus.PublishEvents(events)
 	return nil
 }
 
@@ -61,7 +59,7 @@ func (gateway *CommandGateway) loadAggregate(aggregateType reflect.Type, aggrega
 				error := fmt.Sprintf("Incorrectly configured event listener, event type %T was produced via %v but has an event listener attached to %v\n", event, aggregateType, listener.AggregateType)
 				panic(error)
 			}
-			listener.ApplyEvent(aggregate, event)
+			listener.applyEvent(aggregate, event)
 		}
 	}
 	return aggregate

@@ -11,21 +11,34 @@ var (
 	errorInterface      = reflect.TypeOf((*error)(nil)).Elem()
 )
 
-type MessageHandler struct {
+type aggregateMessageHandler struct {
 	AggregateType reflect.Type
 	FuncName      string
 	F             reflect.Value
 }
 
-func NewMessageHandler(aggregateType reflect.Type, f reflect.Method) *MessageHandler {
-	return &MessageHandler{
+func NewMessageHandler(aggregateType reflect.Type, f reflect.Method) *aggregateMessageHandler {
+	return &aggregateMessageHandler{
 		AggregateType: aggregateType,
 		FuncName:      f.Name,
 		F:             f.Func,
 	}
 }
 
-func (handler *MessageHandler) Call(aggregate reflect.Value, command Command) ([]Event, error) {
+type queryEventListener struct {
+	Query interface{}
+	FuncName      string
+	F             reflect.Value
+}
+func NewEventListener(query interface{}, f reflect.Method) *queryEventListener {
+	return &queryEventListener{
+		Query: query,
+		FuncName:      f.Name,
+		F:             f.Func,
+	}
+}
+
+func (handler *aggregateMessageHandler) applyCommand(aggregate reflect.Value, command Command) ([]Event, error) {
 	in := []reflect.Value{aggregate, reflect.ValueOf(command)}
 	response := handler.F.Call(in)
 	err := response[1].Interface()
@@ -36,10 +49,14 @@ func (handler *MessageHandler) Call(aggregate reflect.Value, command Command) ([
 	return events, nil
 }
 
-func (handler *MessageHandler) ApplyEvent(aggregate reflect.Value, event Event) reflect.Value {
+func (handler *aggregateMessageHandler) applyEvent(aggregate reflect.Value, event Event) {
 	in := []reflect.Value{aggregate, reflect.ValueOf(event)}
 	handler.F.Call(in)
-	return aggregate
+}
+
+func (handler *queryEventListener) applyEvent(event Event) {
+	in := []reflect.Value{reflect.ValueOf(handler.Query), reflect.ValueOf(event)}
+	handler.F.Call(in)
 }
 
 func hasCommandHandlerSignature(f reflect.Method) bool {

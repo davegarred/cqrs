@@ -11,6 +11,7 @@ type EventStore interface {
 }
 
 type MemEventStore struct {
+	eventBus *EventBus
 	eventMap map[string][]StoredEvent
 }
 
@@ -28,7 +29,9 @@ func (s *MemEventStore) Persist(aggregateId string, newEvents []Event) {
 		events = append(events, serialize(event))
 	}
 	s.eventMap[aggregateId] = events
+	s.eventBus.PublishEvents(newEvents)
 }
+
 func (s *MemEventStore) Load(aggregateId string) []Event {
 	storedEvents := s.eventMap[aggregateId]
 	events := make([]Event, len(storedEvents))
@@ -43,8 +46,8 @@ func (s *MemEventStore) Load(aggregateId string) []Event {
 	return events
 }
 
-func NewMemEventStore() EventStore {
-	return &MemEventStore{make(map[string][]StoredEvent)}
+func NewMemEventStore(eventBus *EventBus) EventStore {
+	return &MemEventStore{eventBus,make(map[string][]StoredEvent)}
 }
 
 func serialize(event Event) StoredEvent {
