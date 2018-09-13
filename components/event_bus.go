@@ -1,7 +1,7 @@
-package cqrs
+package components
 
 import (
-	"github.com/davegarred/cqrs/ext"
+	"github.com/davegarred/cqrs"
 	"reflect"
 )
 
@@ -30,7 +30,7 @@ func (eventBus *SynchronousEventBus) RegisterQueryEventHandlers(listener interfa
 	}
 }
 
-func (eventBus *SynchronousEventBus) PublishEvents(events []ext.Event) {
+func (eventBus *SynchronousEventBus) PublishEvents(events []cqrs.Event) {
 	for _, event := range events {
 		for _, listener := range eventBus.queryEventListeners[reflect.TypeOf(event)] {
 			listener.applyEvent(event)

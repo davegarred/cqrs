@@ -2,12 +2,12 @@ package persist
 
 import (
 	"encoding/json"
-	"github.com/davegarred/cqrs/ext"
+	"github.com/davegarred/cqrs"
 	"reflect"
 )
 
 type MemEventStore struct {
-	eventBus ext.EventBus
+	eventBus cqrs.EventBus
 	eventMap map[string][]StoredEvent
 }
 
@@ -16,7 +16,7 @@ type StoredEvent struct {
 	payload   []byte
 }
 
-func (s *MemEventStore) Persist(aggregateId string, newEvents []ext.Event) {
+func (s *MemEventStore) Persist(aggregateId string, newEvents []cqrs.Event) {
 	events := s.eventMap[aggregateId]
 	if events == nil {
 		events = make([]StoredEvent, 0)
@@ -28,25 +28,25 @@ func (s *MemEventStore) Persist(aggregateId string, newEvents []ext.Event) {
 	s.eventBus.PublishEvents(newEvents)
 }
 
-func (s *MemEventStore) Load(aggregateId string) []ext.Event {
+func (s *MemEventStore) Load(aggregateId string) []cqrs.Event {
 	storedEvents := s.eventMap[aggregateId]
-	events := make([]ext.Event, len(storedEvents))
+	events := make([]cqrs.Event, len(storedEvents))
 	for i, storedEvent := range storedEvents {
-		event := reflect.New(storedEvent.eventType).Interface().(ext.Event)
+		event := reflect.New(storedEvent.eventType).Interface().(cqrs.Event)
 		err := json.Unmarshal(storedEvent.payload, event)
 		if err != nil {
 			panic(err)
 		}
-		events[i] = reflect.ValueOf(event).Elem().Interface().(ext.Event)
+		events[i] = reflect.ValueOf(event).Elem().Interface().(cqrs.Event)
 	}
 	return events
 }
 
-func NewMemEventStore(eventBus ext.EventBus) ext.EventStore {
+func NewMemEventStore(eventBus cqrs.EventBus) cqrs.EventStore {
 	return &MemEventStore{eventBus, make(map[string][]StoredEvent)}
 }
 
-func serialize(event ext.Event) StoredEvent {
+func serialize(event cqrs.Event) StoredEvent {
 	eventType := reflect.TypeOf(event)
 	payload, err := json.Marshal(event)
 	if err != nil {

@@ -1,4 +1,4 @@
-package cqrs
+package components
 
 import (
 	"github.com/davegarred/cqrs/persist"

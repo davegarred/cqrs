@@ -1,4 +1,4 @@
-package ext
+package cqrs
 
 type Command interface {
 	TargetAggregateId() string

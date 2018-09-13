@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/davegarred/cqrs"
-	"github.com/davegarred/cqrs/ext"
+	"github.com/davegarred/cqrs/components"
 	"github.com/davegarred/cqrs/persist"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -24,9 +24,9 @@ var (
 )
 
 func TestCommandGateway_foo(t *testing.T) {
-	eventBus := cqrs.NewEventBus()
+	eventBus := components.NewEventBus()
 	eventStore := persist.NewMemEventStore(eventBus)
-	commandGateway := cqrs.NewCommandGateway(eventStore)
+	commandGateway := components.NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&fooAggregate{})
 	eventBus.RegisterQueryEventHandlers(&fooBarEventListener{})
 
@@ -38,9 +38,9 @@ func TestCommandGateway_foo(t *testing.T) {
 }
 
 func TestCommandGateway_bar(t *testing.T) {
-	eventBus := cqrs.NewEventBus()
+	eventBus := components.NewEventBus()
 	eventStore := persist.NewMemEventStore(eventBus)
-	commandGateway := cqrs.NewCommandGateway(eventStore)
+	commandGateway := components.NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&barAggregate{})
 	eventBus.RegisterQueryEventHandlers(&fooBarEventListener{})
 
@@ -51,9 +51,9 @@ func TestCommandGateway_bar(t *testing.T) {
 }
 
 func TestCombinedCommandGateways(t *testing.T) {
-	eventBus := cqrs.NewEventBus()
+	eventBus := components.NewEventBus()
 	eventStore := persist.NewMemEventStore(eventBus)
-	commandGateway := cqrs.NewCommandGateway(eventStore)
+	commandGateway := components.NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&fooAggregate{})
 	commandGateway.RegisterAggregate(&barAggregate{})
 	eventBus.RegisterQueryEventHandlers(&fooBarEventListener{})
@@ -73,7 +73,7 @@ func TestCombinedCommandGateways(t *testing.T) {
 	}
 }
 
-func dispatchCleanly(commandGateway *cqrs.CommandGateway, c ext.Command) error {
+func dispatchCleanly(commandGateway *components.CommandGateway, c cqrs.Command) error {
 	err := commandGateway.Dispatch(c)
 	if err != nil {
 		panic(err)
@@ -100,14 +100,14 @@ func (a *fooAggregate) NonCQRSFunction_oneParam_similarSig(_ string) ([]string, 
 	panic("This should never be called")
 	return nil, nil
 }
-func (a *fooAggregate) HandleCreateFoo(e createFooCommand) ([]ext.Event, error) {
-	return []ext.Event{fooCreatedEvent{e.Id}}, nil
+func (a *fooAggregate) HandleCreateFoo(e createFooCommand) ([]cqrs.Event, error) {
+	return []cqrs.Event{fooCreatedEvent{e.Id}}, nil
 }
-func (a *fooAggregate) HandleNameFoo_requireIdSet(e nameFooCommand) ([]ext.Event, error) {
+func (a *fooAggregate) HandleNameFoo_requireIdSet(e nameFooCommand) ([]cqrs.Event, error) {
 	if a.fooId == "" {
 		return nil, errors.New("aggregate has not been initialized")
 	}
-	return []ext.Event{fooNamedEvent{e.Id, e.Name}}, nil
+	return []cqrs.Event{fooNamedEvent{e.Id, e.Name}}, nil
 }
 
 func (a *fooAggregate) OnFooCreated(e fooCreatedEvent) {
@@ -154,11 +154,11 @@ type barAggregate struct {
 	configuration string
 }
 
-func (a *barAggregate) HandleCreateBar(e createBarCommand) ([]ext.Event, error) {
-	return []ext.Event{barCreatedEvent{e.Id}}, nil
+func (a *barAggregate) HandleCreateBar(e createBarCommand) ([]cqrs.Event, error) {
+	return []cqrs.Event{barCreatedEvent{e.Id}}, nil
 }
-func (a *barAggregate) HandleNameBar(e configureBarCommand) ([]ext.Event, error) {
-	return []ext.Event{barConfiguredEvent{e.Id, e.Configuration}}, nil
+func (a *barAggregate) HandleNameBar(e configureBarCommand) ([]cqrs.Event, error) {
+	return []cqrs.Event{barConfiguredEvent{e.Id, e.Configuration}}, nil
 }
 
 func (a *barAggregate) OnBarCreated(e barCreatedEvent) {

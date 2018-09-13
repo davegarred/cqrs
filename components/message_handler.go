@@ -1,14 +1,14 @@
-package cqrs
+package components
 
 import (
-	"github.com/davegarred/cqrs/ext"
+	"github.com/davegarred/cqrs"
 	"reflect"
 )
 
 var (
-	commandInterface    = reflect.TypeOf((*ext.Command)(nil)).Elem()
-	eventInterface      = reflect.TypeOf((*ext.Event)(nil)).Elem()
-	eventSliceInterface = reflect.TypeOf([]ext.Event{})
+	commandInterface    = reflect.TypeOf((*cqrs.Command)(nil)).Elem()
+	eventInterface      = reflect.TypeOf((*cqrs.Event)(nil)).Elem()
+	eventSliceInterface = reflect.TypeOf([]cqrs.Event{})
 	errorInterface      = reflect.TypeOf((*error)(nil)).Elem()
 )
 
@@ -40,23 +40,23 @@ func NewEventListener(query interface{}, f reflect.Method) *queryEventListener {
 	}
 }
 
-func (handler *aggregateMessageHandler) applyCommand(aggregate reflect.Value, command ext.Command) ([]ext.Event, error) {
+func (handler *aggregateMessageHandler) applyCommand(aggregate reflect.Value, command cqrs.Command) ([]cqrs.Event, error) {
 	in := []reflect.Value{aggregate, reflect.ValueOf(command)}
 	response := handler.F.Call(in)
 	err := response[1].Interface()
 	if err != nil {
 		return nil, err.(error)
 	}
-	events := response[0].Interface().([]ext.Event)
+	events := response[0].Interface().([]cqrs.Event)
 	return events, nil
 }
 
-func (handler *aggregateMessageHandler) applyEvent(aggregate reflect.Value, event ext.Event) {
+func (handler *aggregateMessageHandler) applyEvent(aggregate reflect.Value, event cqrs.Event) {
 	in := []reflect.Value{aggregate, reflect.ValueOf(event)}
 	handler.F.Call(in)
 }
 
-func (handler *queryEventListener) applyEvent(event ext.Event) {
+func (handler *queryEventListener) applyEvent(event cqrs.Event) {
 	in := []reflect.Value{reflect.ValueOf(handler.Query), reflect.ValueOf(event)}
 	handler.F.Call(in)
 }
