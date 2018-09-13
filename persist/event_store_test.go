@@ -1,6 +1,8 @@
-package cqrs
+package persist
 
 import (
+	"github.com/davegarred/cqrs"
+	"github.com/davegarred/cqrs/ext"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,13 +13,13 @@ const aggregateId = "aggregate_id"
 func TestNewMemEventStore(t *testing.T) {
 	assert := assert.New(t)
 	listener := &eventBusQueryListener{}
-	eventBus := NewEventBus()
+	eventBus := cqrs.NewEventBus()
 	eventBus.RegisterQueryEventHandlers(listener)
 	es := NewMemEventStore(eventBus)
 	event1 := eventBusTestEvent1{aggregateId}
 	event2 := eventBusTestEvent2{aggregateId, "a name"}
 
-	es.Persist(aggregateId, []Event{event1, event2})
+	es.Persist(aggregateId, []ext.Event{event1, event2})
 
 	events := es.Load(aggregateId)
 	assert.Equal(2, len(events))

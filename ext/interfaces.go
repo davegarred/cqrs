@@ -1,4 +1,4 @@
-package cqrs
+package ext
 
 type Command interface {
 	TargetAggregateId() string
@@ -11,4 +11,8 @@ type Event interface {
 type EventStore interface {
 	Persist(aggregateId string, events []Event)
 	Load(aggregateId string) []Event
+}
+
+type EventBus interface {
+	PublishEvents(events []Event)
 }

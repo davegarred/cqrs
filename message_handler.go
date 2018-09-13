@@ -1,13 +1,14 @@
 package cqrs
 
 import (
+	"github.com/davegarred/cqrs/ext"
 	"reflect"
 )
 
 var (
-	commandInterface    = reflect.TypeOf((*Command)(nil)).Elem()
-	eventInterface      = reflect.TypeOf((*Event)(nil)).Elem()
-	eventSliceInterface = reflect.TypeOf([]Event{})
+	commandInterface    = reflect.TypeOf((*ext.Command)(nil)).Elem()
+	eventInterface      = reflect.TypeOf((*ext.Event)(nil)).Elem()
+	eventSliceInterface = reflect.TypeOf([]ext.Event{})
 	errorInterface      = reflect.TypeOf((*error)(nil)).Elem()
 )
 
@@ -39,23 +40,23 @@ func NewEventListener(query interface{}, f reflect.Method) *queryEventListener {
 	}
 }
 
-func (handler *aggregateMessageHandler) applyCommand(aggregate reflect.Value, command Command) ([]Event, error) {
+func (handler *aggregateMessageHandler) applyCommand(aggregate reflect.Value, command ext.Command) ([]ext.Event, error) {
 	in := []reflect.Value{aggregate, reflect.ValueOf(command)}
 	response := handler.F.Call(in)
 	err := response[1].Interface()
 	if err != nil {
 		return nil, err.(error)
 	}
-	events := response[0].Interface().([]Event)
+	events := response[0].Interface().([]ext.Event)
 	return events, nil
 }
 
-func (handler *aggregateMessageHandler) applyEvent(aggregate reflect.Value, event Event) {
+func (handler *aggregateMessageHandler) applyEvent(aggregate reflect.Value, event ext.Event) {
 	in := []reflect.Value{aggregate, reflect.ValueOf(event)}
 	handler.F.Call(in)
 }
 
-func (handler *queryEventListener) applyEvent(event Event) {
+func (handler *queryEventListener) applyEvent(event ext.Event) {
 	in := []reflect.Value{reflect.ValueOf(handler.Query), reflect.ValueOf(event)}
 	handler.F.Call(in)
 }

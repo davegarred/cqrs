@@ -1,6 +1,7 @@
 package cqrs
 
 import (
+	"github.com/davegarred/cqrs/ext"
 	"reflect"
 	"testing"
 
@@ -45,7 +46,7 @@ func Test_aggregateMessageHandler_applyCommand(t *testing.T) {
 
 	events, err := messageHandler.applyCommand(reflect.ValueOf(aggregate), testMessageHandlerCommand{})
 
-	assert.Equal(t, []Event{testMessageHandlerEvent{}}, events)
+	assert.Equal(t, []ext.Event{testMessageHandlerEvent{}}, events)
 	assert.Nil(t, err)
 }
 
@@ -80,8 +81,8 @@ type testMessageHandlerAggregate struct {
 	success bool
 }
 
-func (a *testMessageHandlerAggregate) Handle(e testMessageHandlerCommand) ([]Event, error) {
-	return []Event{testMessageHandlerEvent{}}, nil
+func (a *testMessageHandlerAggregate) Handle(e testMessageHandlerCommand) ([]ext.Event, error) {
+	return []ext.Event{testMessageHandlerEvent{}}, nil
 }
 func (a *testMessageHandlerAggregate) HandleEvent(e testMessageHandlerEvent) {
 	a.success = true

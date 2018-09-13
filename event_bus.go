@@ -1,18 +1,19 @@
 package cqrs
 
 import (
+	"github.com/davegarred/cqrs/ext"
 	"reflect"
 )
 
-type EventBus struct {
+type SynchronousEventBus struct {
 	queryEventListeners map[reflect.Type][]*queryEventListener
 }
 
-func NewEventBus() *EventBus {
-	return &EventBus{make(map[reflect.Type][]*queryEventListener)}
+func NewEventBus() *SynchronousEventBus {
+	return &SynchronousEventBus{make(map[reflect.Type][]*queryEventListener)}
 }
 
-func (eventBus *EventBus) RegisterQueryEventHandlers(listener interface{}) {
+func (eventBus *SynchronousEventBus) RegisterQueryEventHandlers(listener interface{}) {
 	aggregateType := reflect.TypeOf(listener)
 	for i := 0; i < aggregateType.NumMethod(); i++ {
 		f := aggregateType.Method(i)
@@ -29,7 +30,7 @@ func (eventBus *EventBus) RegisterQueryEventHandlers(listener interface{}) {
 	}
 }
 
-func (eventBus *EventBus) PublishEvents(events []Event) {
+func (eventBus *SynchronousEventBus) PublishEvents(events []ext.Event) {
 	for _, event := range events {
 		for _, listener := range eventBus.queryEventListeners[reflect.TypeOf(event)] {
 			listener.applyEvent(event)

@@ -1,6 +1,7 @@
 package cqrs
 
 import (
+	"github.com/davegarred/cqrs/persist"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ var (
 
 func TestCommandGateway_foo(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore(eventBus)
+	eventStore := persist.NewMemEventStore(eventBus)
 	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&fooAggregate{})
 
@@ -33,7 +34,7 @@ func TestCommandGateway_foo(t *testing.T) {
 
 func TestCommandGateway_errorOnDispatch(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore(eventBus)
+	eventStore := persist.NewMemEventStore(eventBus)
 	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&fooAggregate{})
 
@@ -45,7 +46,7 @@ func TestCommandGateway_errorOnDispatch(t *testing.T) {
 
 func TestCommandGateway_unconfiguredCommand(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore(eventBus)
+	eventStore := persist.NewMemEventStore(eventBus)
 	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&fooAggregate{})
 
@@ -57,7 +58,7 @@ func TestCommandGateway_unconfiguredCommand(t *testing.T) {
 
 func TestCommandGateway_bar(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore(eventBus)
+	eventStore := persist.NewMemEventStore(eventBus)
 	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&barAggregate{})
 
@@ -74,7 +75,7 @@ func TestCommandGateway_bar(t *testing.T) {
 
 func TestCombinedCommandGateways(t *testing.T) {
 	eventBus := NewEventBus()
-	eventStore := NewMemEventStore(eventBus)
+	eventStore := persist.NewMemEventStore(eventBus)
 	commandGateway := NewCommandGateway(eventStore)
 	commandGateway.RegisterAggregate(&fooAggregate{})
 	commandGateway.RegisterAggregate(&barAggregate{})

@@ -1,12 +1,13 @@
-package cqrs
+package persist
 
 import (
 	"encoding/json"
+	"github.com/davegarred/cqrs/ext"
 	"reflect"
 )
 
 type MemEventStore struct {
-	eventBus *EventBus
+	eventBus ext.EventBus
 	eventMap map[string][]StoredEvent
 }
 
@@ -15,7 +16,7 @@ type StoredEvent struct {
 	payload   []byte
 }
 
-func (s *MemEventStore) Persist(aggregateId string, newEvents []Event) {
+func (s *MemEventStore) Persist(aggregateId string, newEvents []ext.Event) {
 	events := s.eventMap[aggregateId]
 	if events == nil {
 		events = make([]StoredEvent, 0)
@@ -27,25 +28,25 @@ func (s *MemEventStore) Persist(aggregateId string, newEvents []Event) {
 	s.eventBus.PublishEvents(newEvents)
 }
 
-func (s *MemEventStore) Load(aggregateId string) []Event {
+func (s *MemEventStore) Load(aggregateId string) []ext.Event {
 	storedEvents := s.eventMap[aggregateId]
-	events := make([]Event, len(storedEvents))
+	events := make([]ext.Event, len(storedEvents))
 	for i, storedEvent := range storedEvents {
-		event := reflect.New(storedEvent.eventType).Interface().(Event)
+		event := reflect.New(storedEvent.eventType).Interface().(ext.Event)
 		err := json.Unmarshal(storedEvent.payload, event)
 		if err != nil {
 			panic(err)
 		}
-		events[i] = reflect.ValueOf(event).Elem().Interface().(Event)
+		events[i] = reflect.ValueOf(event).Elem().Interface().(ext.Event)
 	}
 	return events
 }
 
-func NewMemEventStore(eventBus *EventBus) EventStore {
+func NewMemEventStore(eventBus ext.EventBus) ext.EventStore {
 	return &MemEventStore{eventBus, make(map[string][]StoredEvent)}
 }
 
-func serialize(event Event) StoredEvent {
+func serialize(event ext.Event) StoredEvent {
 	eventType := reflect.TypeOf(event)
 	payload, err := json.Marshal(event)
 	if err != nil {

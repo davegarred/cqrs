@@ -2,6 +2,7 @@ package cqrs
 
 import (
 	"errors"
+	"github.com/davegarred/cqrs/ext"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,14 +40,14 @@ func (a *fooAggregate) NonCQRSFunction_oneParam_similarSig(_ string) ([]string, 
 	panic("This should never be called")
 	return nil, nil
 }
-func (a *fooAggregate) HandleCreateFoo(e createFooCommand) ([]Event, error) {
-	return []Event{fooCreatedEvent{e.Id}}, nil
+func (a *fooAggregate) HandleCreateFoo(e createFooCommand) ([]ext.Event, error) {
+	return []ext.Event{fooCreatedEvent{e.Id}}, nil
 }
-func (a *fooAggregate) HandleNameFoo_requireIdSet(e nameFooCommand) ([]Event, error) {
+func (a *fooAggregate) HandleNameFoo_requireIdSet(e nameFooCommand) ([]ext.Event, error) {
 	if a.fooId == "" {
 		return nil, errors.New("aggregate has not been initialized")
 	}
-	return []Event{fooNamedEvent{e.Id, e.Name}}, nil
+	return []ext.Event{fooNamedEvent{e.Id, e.Name}}, nil
 }
 
 func (a *fooAggregate) OnFooCreated(e fooCreatedEvent) {
@@ -87,11 +88,11 @@ type barAggregate struct {
 	configuration string
 }
 
-func (a *barAggregate) HandleCreateBar(e createBarCommand) ([]Event, error) {
-	return []Event{barCreatedEvent{e.Id}}, nil
+func (a *barAggregate) HandleCreateBar(e createBarCommand) ([]ext.Event, error) {
+	return []ext.Event{barCreatedEvent{e.Id}}, nil
 }
-func (a *barAggregate) HandleNameBar(e configureBarCommand) ([]Event, error) {
-	return []Event{barConfiguredEvent{e.Id, e.Configuration}}, nil
+func (a *barAggregate) HandleNameBar(e configureBarCommand) ([]ext.Event, error) {
+	return []ext.Event{barConfiguredEvent{e.Id, e.Configuration}}, nil
 }
 
 func (a *barAggregate) OnBarCreated(e barCreatedEvent) {

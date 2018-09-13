@@ -3,16 +3,17 @@ package cqrs
 import (
 	"errors"
 	"fmt"
+	"github.com/davegarred/cqrs/ext"
 	"reflect"
 )
 
 type CommandGateway struct {
-	eventStore              EventStore
+	eventStore              ext.EventStore
 	commandHandlers         map[reflect.Type]*aggregateMessageHandler
 	aggregateEventListeners map[reflect.Type]*aggregateMessageHandler
 }
 
-func NewCommandGateway(eventStore EventStore) *CommandGateway {
+func NewCommandGateway(eventStore ext.EventStore) *CommandGateway {
 	return &CommandGateway{eventStore, make(map[reflect.Type]*aggregateMessageHandler), make(map[reflect.Type]*aggregateMessageHandler)}
 }
 
@@ -30,7 +31,7 @@ func (gateway *CommandGateway) RegisterAggregate(aggregate interface{}) {
 	}
 }
 
-func (gateway *CommandGateway) Dispatch(command Command) error {
+func (gateway *CommandGateway) Dispatch(command ext.Command) error {
 	commandType := reflect.TypeOf(command)
 	commandHandler := gateway.commandHandlers[commandType]
 	if commandHandler == nil {
