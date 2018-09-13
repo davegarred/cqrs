@@ -7,3 +7,8 @@ type Command interface {
 type Event interface {
 	AggregateId() string
 }
+
+type EventStore interface {
+	Persist(aggregateId string, events []Event)
+	Load(aggregateId string) []Event
+}

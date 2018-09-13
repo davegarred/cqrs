@@ -26,15 +26,16 @@ func NewMessageHandler(aggregateType reflect.Type, f reflect.Method) *aggregateM
 }
 
 type queryEventListener struct {
-	Query interface{}
-	FuncName      string
-	F             reflect.Value
+	Query    interface{}
+	FuncName string
+	F        reflect.Value
 }
+
 func NewEventListener(query interface{}, f reflect.Method) *queryEventListener {
 	return &queryEventListener{
-		Query: query,
-		FuncName:      f.Name,
-		F:             f.Func,
+		Query:    query,
+		FuncName: f.Name,
+		F:        f.Func,
 	}
 }
 

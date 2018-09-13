@@ -1,8 +1,9 @@
 package cqrs
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const aggregateId = "aggregate_id"
@@ -29,15 +30,17 @@ func TestNewMemEventStore(t *testing.T) {
 type eventBusTestEvent1 struct {
 	Id string
 }
-func (e eventBusTestEvent1) AggregateId() string {return e.Id}
+
+func (e eventBusTestEvent1) AggregateId() string { return e.Id }
 
 type eventBusTestEvent2 struct {
-	Id string
+	Id   string
 	Name string
 }
-func (e eventBusTestEvent2) AggregateId() string {return e.Id}
 
-type eventBusQueryListener struct{
+func (e eventBusTestEvent2) AggregateId() string { return e.Id }
+
+type eventBusQueryListener struct {
 	foundEvent1 bool
 	foundEvent2 bool
 }

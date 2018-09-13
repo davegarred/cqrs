@@ -5,11 +5,6 @@ import (
 	"reflect"
 )
 
-type EventStore interface {
-	Persist(aggregateId string, events []Event)
-	Load(aggregateId string) []Event
-}
-
 type MemEventStore struct {
 	eventBus *EventBus
 	eventMap map[string][]StoredEvent
@@ -47,7 +42,7 @@ func (s *MemEventStore) Load(aggregateId string) []Event {
 }
 
 func NewMemEventStore(eventBus *EventBus) EventStore {
-	return &MemEventStore{eventBus,make(map[string][]StoredEvent)}
+	return &MemEventStore{eventBus, make(map[string][]StoredEvent)}
 }
 
 func serialize(event Event) StoredEvent {
